@@ -21,30 +21,42 @@ def file_path():
     return 's3://test-bucket/test-object'
 
 
-@mock_aws
-def test_read_file(s3_client, csv_example):
+# @mock_aws
+# def test_read_file(s3_client, csv_example):
 
     
-    s3_client.create_bucket(Bucket="test-bucket12112121212", CreateBucketConfiguration={"LocationConstraint": "eu-west-2"})
+#     s3_client.create_bucket(Bucket="test-bucket12112121212", CreateBucketConfiguration={"LocationConstraint": "eu-west-2"})
 
-    s3_client.put_object(Bucket="test-bucket12112121212", Key="test-object", Body=csv_example)
+#     s3_client.put_object(Bucket="test-bucket12112121212", Key="test-object", Body=csv_example)
 
-    result = s3_client.get_object(Bucket="test-bucket12112121212", Key="test-object")
+#     result = s3_client.get_object(Bucket="test-bucket12112121212", Key="test-object")
 
-    #print(result)
-    assert result["Body"].read().decode() == csv_example
+#     #print(result)
+#     assert result["Body"].read().decode() == csv_example
     
 
 # @mock_aws
-# def test_read_file_valid_s3_path(s3_client, file_path, csv_example):
+# def test_creates_mock_bucket(csv_example):
+#     mock_client = boto3.client("s3", region_name="eu-west-2")
 
-#     s3_client.create_bucket(Bucket="test-bucket", CreateBucketConfiguration={"LocationConstraint": "eu-west-2"})
+#     result = mock_client.create_bucket(Bucket="test-mock-bucket", CreateBucketConfiguration={"LocationConstraint" : "eu-west-2"})
 
-#     s3_client.put_object(Bucket="test-bucket", Key="test-object", Body=csv_example)
+#     assert result
 
-#     result = s3_read_file(file_path)
 
-#     assert result == csv_example
+
+@mock_aws
+def test_read_file_valid_s3_path(file_path, csv_example):
+
+    s3_client = boto3.client("s3", region_name ="eu-west-2")
+
+    s3_client.create_bucket(Bucket="test-bucket", CreateBucketConfiguration={"LocationConstraint": "eu-west-2"})
+
+    s3_client.put_object(Bucket="test-bucket", Key="test-object", Body=csv_example)
+
+    result = s3_read_file(file_path)
+
+    assert result == csv_example
 
 
 
