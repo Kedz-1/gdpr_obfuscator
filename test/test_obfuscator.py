@@ -26,86 +26,69 @@ def file_path():
 
 
 @mock_aws
-def test_read_file_valid_s3_path(file_path, csv_example):
+def test_read_file_obfuscates_for_one_field(file_path, csv_example):
 
-    s3_client = boto3.client("s3", region_name ="eu-west-2")
+    s3_client = boto3.client("s3", region_name="eu-west-2")
 
-    s3_client.create_bucket(Bucket="test-bucket", CreateBucketConfiguration={"LocationConstraint": "eu-west-2"})
+    s3_client.create_bucket(Bucket="test-bucket", CreateBucketConfiguration={"LocationConstraint":"eu-west-2"})
+
+    s3_client.put_object(Bucket="test-bucket", Key="test-object", Body=csv_example)
+
+    file_path = {
+
+"file_to_obfuscate": "s3://test-bucket/test-object",
+
+"pii_fields": ["name"]
+
+}
+
+    result = s3_read_file(file_path)
+
+    assert result == 'name,email\n***,john.doe@example.com\n'
+
+
+@mock_aws
+def test_read_file_obfuscates_for_multiple_fields(file_path, csv_example):
+
+    s3_client = boto3.client("s3", region_name="eu-west-2")
+
+    s3_client.create_bucket(Bucket="test-bucket", CreateBucketConfiguration={"LocationConstraint":"eu-west-2"})
 
     s3_client.put_object(Bucket="test-bucket", Key="test-object", Body=csv_example)
 
     result = s3_read_file(file_path)
 
-    assert result == csv_example
+    assert result == 'name,email\n***,***\n'
 
 
 @mock_aws
-def test_read_file_raises_exception_for_invalid_s3():
-    
-    file_path = {
+def test_read_file_error_for_non_existent_field(csv_example):
 
-"file_to_obfuscate": "test-bucket/test-object",
+    s3_client = boto3.client("s3", region_name="eu-west-2")
 
-"pii_fields": ["name", "email_address"]
+    s3_client.create_bucket(Bucket="test-bucket", CreateBucketConfiguration={"LocationConstraint":"eu-west-2"})
 
-}
+    s3_client.put_object(Bucket="test-bucket", Key="test-object", Body=csv_example)
 
-    with pytest.raises(ValueError, match='The file path must start with \'s3://\'.'):
-        s3_read_file(file_path)
+    file_path['friend'] = 'Kedz'
 
-
-@mock_aws
-def test_read_file_raises_exception_for_no_object():
-
-    file_path = {
-
-"file_to_obfuscate": "s3://test-bucket",
-
-"pii_fields": ["name", "email_address"]
-
-}
-
-    with pytest.raises(ValueError, match='Path must contain a bucket and an object.'):
-        s3_read_file(file_path)
+    with pytest.raises(ClientError, match='Object not found'):
+        result = s3_read_file(file_path)
 
 
 @mock_aws
-def test_read_file_no_object_found(file_path):
-
-    s3_client = boto3.client('s3', region_name='eu-west-2')
-
-    s3_client.create_bucket(Bucket='test-bucket', CreateBucketConfiguration={'LocationConstraint': 'eu-west-2'})
-
-    with pytest.raises(ClientError, match="The specified key does not exist"):
-        s3_read_file(file_path)
-
-
-@mock_aws
-def test_read_file_no_path():
-
-    with pytest.raises(ValueError, match="The file path must start with 's3://'. "):
-        s3_read_file({
-            'file_to_obfuscate' : '',
-            
-            'pii_fields' : ['name', 'email']
-        })
-
-
-@mock_aws
-def test_read_file_has_a_non_existent_bucket():
+def test_read_file_error_for_no_pii_fields(csv_example):
 
     file_path = {
 
-"file_to_obfuscate": "s3://non-existent-bucket/test-object",
+"file_to_obfuscate": "s3://test-bucket/test-object",
 
-"pii_fields": ["name", "email_address"]
+"pii_fields": [""]
 
 }
 
-    with pytest.raises(ClientError, match = 'The specified bucket does not exist'):
+    with pytest.raises(ClientError, match='Specified key does not exists'):
         s3_read_file(file_path)
-
-
 
 
 

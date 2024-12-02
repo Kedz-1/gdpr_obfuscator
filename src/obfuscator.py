@@ -2,6 +2,8 @@ import boto3
 import io 
 from botocore.exceptions import ClientError
 import logging
+import csv
+from io import StringIO
 
 
 logging.basicConfig(level=logging.INFO)
@@ -18,7 +20,7 @@ def s3_read_file(input_data, region="eu-west-2"):
         raise ValueError('The file path must start with \'s3://\'. ')
     
     paths = file_path[5:].split('/', 1)
-    print(paths)
+    #print(paths)
     
     if len(paths) != 2:
         raise ValueError('Path must contain a bucket and an object.')
@@ -29,6 +31,17 @@ def s3_read_file(input_data, region="eu-west-2"):
     try:
         response = s3_client.get_object(Bucket=s3_bucket, Key=s3_object)["Body"].read().decode()
 
+
+        csv_file = StringIO(response)
+        csv_reader = csv.DictReader(csv_file)
+
+        for pii in csv_reader:
+            if pii['name']:
+                pii['name'] = '***'
+            #print(pii)
+            print(csv_reader)
+
+
         logging.info(f'Successfully received the content stored in {s3_object} - {response}')
         return response
     
@@ -36,12 +49,10 @@ def s3_read_file(input_data, region="eu-west-2"):
         logging.error(f'An error has occured whilst trying to access {s3_object}\'s content in {s3_bucket}.')
         raise
 
-#s3_read_file("s3://thisisgoingtobemytestbucket/thisismytestprefix/thisismytestobject")
-
-s3_read_file({
-"file_to_obfuscate": "s3://kedz-test-bucket/kedz-test-object",
+print(s3_read_file({
+"file_to_obfuscate": "s3://masking-test-bucket/masking-test-object",
 "pii_fields": ["name", "email_address"]
-})
+}))
 
 '''
 In the first instance, it is only necessary to be able to process CSV data.
@@ -70,4 +81,4 @@ pii_fields = data["pii_fields"]
 
 paths = file_path[5:].split('/', 1)
 
-print(paths)
+# print(paths)
