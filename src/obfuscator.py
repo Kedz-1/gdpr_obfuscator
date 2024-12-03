@@ -14,6 +14,7 @@ def s3_read_file(input_data, region="eu-west-2"):
 
     file_path = input_data['file_to_obfuscate'] 
     pii_fields = input_data['pii_fields']
+    
 
 
     if not file_path.startswith('s3://'):
@@ -35,15 +36,35 @@ def s3_read_file(input_data, region="eu-west-2"):
         csv_file = StringIO(response)
         csv_reader = csv.DictReader(csv_file)
 
-        for pii in csv_reader:
-            if pii['name']:
-                pii['name'] = '***'
-            #print(pii)
-            print(csv_reader)
+        obfuscated_data = []
 
+        for values in csv_reader:
+            for pii in pii_fields:
+                if pii in values:
+                    values[pii] = '***'
+            obfuscated_data.append(values)
+
+        
+        convert_to_csv = StringIO(newline='')
+
+        field_names = obfuscated_data[0].keys()
+
+        csv_format = csv.DictWriter(convert_to_csv, fieldnames=field_names)
+
+        csv_format.writeheader()
+
+        csv_format.writerows(obfuscated_data)
+
+        result = convert_to_csv.getvalue()
+
+        result = result.replace('\r\n', '\n')
+
+
+        
 
         logging.info(f'Successfully received the content stored in {s3_object} - {response}')
-        return response
+        return result
+        
     
     except ClientError as e:
         logging.error(f'An error has occured whilst trying to access {s3_object}\'s content in {s3_bucket}.')
@@ -51,7 +72,7 @@ def s3_read_file(input_data, region="eu-west-2"):
 
 print(s3_read_file({
 "file_to_obfuscate": "s3://masking-test-bucket/masking-test-object",
-"pii_fields": ["name", "email_address"]
+"pii_fields": ["name", "email"]
 }))
 
 '''
