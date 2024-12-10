@@ -1,7 +1,13 @@
 import boto3
 import io 
+from botocore.exceptions import ClientError
+import logging
+import csv
+from io import StringIO
 
-def s3_read_file(file_path, region="eu-west-2"): #pii_fields, region="eu=west-2"):
+logging.basicConfig(level=logging.INFO)
+
+def read_s3(file_path, region="eu-west-2"):
 
     s3_client = boto3.client("s3", region_name = region)
 
@@ -10,8 +16,6 @@ def s3_read_file(file_path, region="eu-west-2"): #pii_fields, region="eu=west-2"
     
     paths = file_path[5:].split('/', 1)
 
-    print(paths)
-    
     if len(paths) != 2:
         raise ValueError('Path must contain a bucket and an object.')
     
@@ -19,15 +23,28 @@ def s3_read_file(file_path, region="eu-west-2"): #pii_fields, region="eu=west-2"
     s3_object = paths[1]
 
     try:
-        response = s3_client.get_object(Bucket=s3_bucket, Key=s3_object)["Body"].read().decode()
-
-        print(f'Successfully received the content stored in {s3_object} - {response}')
-        return response
+        response = s3_client.get_object(Bucket=s3_bucket, Key=s3_object)
+        content = response["Body"].read().decode()
+        logging.info(f'Successfully received the content stored in {s3_object} - {content}')
+        return content
     
-    except Exception as e:
-        print(f'An error ({e}) has occured whilst trying to access {s3_object}\'s content.')
+    except ClientError as e:
+        logging.error(f'An error ({e}) has occured whilst trying to access {s3_object}\'s content.')
+        raise
 
-s3_read_file("s3://thisisgoingtobemytestbucket/thisismytestprefix/thisismytestobject")
+# print(read_s3('s3://kedz-test-bucket/test-object'))
+
+def write_s3(bucket, key, content, region='eu-west-2'):
+
+    s3_client = boto3.client('s3', region_name=region)
+
+    try:
+        s3_client.put_object(Bucket=bucket, Key=key, Body=content)
+        logging.info(f'Successfully wrote obfuscated data to {key} in {bucket}')
+    
+    except ClientError as e:
+        logging.error(f'Failed to write obfuscated data to S3: {e}')
+        raise
 
 
 '''
