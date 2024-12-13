@@ -12,6 +12,9 @@ def obfuscation_tool(csv_content, pii_fields):
 
     if not pii_fields:
             raise ValueError ('No PII fields specified')
+    
+    if len(csv_content) == 0:
+        raise ValueError('The file is empty or contains no data to process')
         
 
     csv_file = StringIO(csv_content)
@@ -23,9 +26,7 @@ def obfuscation_tool(csv_content, pii_fields):
         for pii in pii_fields:
             if pii in values:
                 values[pii] = '***'
-            else:
-                raise ValueError(f"'{pii}' not found in CSV data")
-
+           
         obfuscated_data.append(values)
         
     convert_to_csv = StringIO(newline='')
@@ -42,6 +43,8 @@ def obfuscation_tool(csv_content, pii_fields):
 
     result = result.replace('\r\n', '\n')
 
+    byte_stream = result.encode('utf-8')
+
     logging.info(f'Successfully received the CSV content')
 
-    return result
+    return byte_stream
