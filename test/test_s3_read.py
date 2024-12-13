@@ -62,7 +62,7 @@ def test_read_file_no_object_found(file_path):
 def test_read_file_no_path():
     file_path = ''
         
-    with pytest.raises(ValueError, match="The file path must start with 's3://'. "):
+    with pytest.raises(ValueError, match="The file path must start with 's3://' "):
         read_s3(file_path)
 
 
