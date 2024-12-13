@@ -20,16 +20,16 @@ def read_s3(file_path, region="eu-west-2"):
         raise ValueError('Path must contain a bucket and an object.')
     
     s3_bucket = paths[0]
-    s3_object = paths[1]
+    s3_key = paths[1]
 
     try:
-        response = s3_client.get_object(Bucket=s3_bucket, Key=s3_object)
+        response = s3_client.get_object(Bucket=s3_bucket, Key=s3_key)
         content = response["Body"].read().decode()
-        logging.info(f'Successfully received the content stored in {s3_object} - {content}')
+        logging.info(f'Successfully received the content stored in {s3_key} - {content}')
         return content
     
     except ClientError as e:
-        logging.error(f'An error ({e}) has occured whilst trying to access {s3_object}\'s content.')
+        logging.error(f'An error ({e}) has occured whilst trying to access {s3_key}\'s content.')
         raise
 
 # print(read_s3('s3://kedz-test-bucket/test-object'))
@@ -37,6 +37,9 @@ def read_s3(file_path, region="eu-west-2"):
 def write_s3(bucket, key, content, region='eu-west-2'):
 
     s3_client = boto3.client('s3', region_name=region)
+    
+    if not bucket:
+        raise ValueError('The specified bucket does not exist')
 
     try:
         s3_client.put_object(Bucket=bucket, Key=key, Body=content)
@@ -45,6 +48,9 @@ def write_s3(bucket, key, content, region='eu-west-2'):
     except ClientError as e:
         logging.error(f'Failed to write obfuscated data to S3: {e}')
         raise
+
+
+# print(write_s3('s3://kedz-test-bucket/kedz-test-object', 'hi'))
 
 
 '''
@@ -77,7 +83,7 @@ The tool will be invoked by sending a JSON string containing:
 #         print(f'An error has occured while creating the bucket: {e}.')
 #         raise
 
-# make_bucket("thisisgoingtobemytestbucket11111")
+# make_bucket("final-obfuscation-bucket")
 
 
 # def put_object(bucket_name, object_name, content, region="eu-west-2"):
@@ -94,7 +100,7 @@ The tool will be invoked by sending a JSON string containing:
 #         print(f'An error has occured whilst creating an object: {e}.')
 #         raise
 
-# put_object('thisisgoingtobemytestbucket', 'thisismytestprefix/thisismytestobject', 'hi')
+# put_object('final-obfuscation-bucket', 'final-obfuscation-key.csv', 'name,email\njohn Doe,john.doe@example.com\n')
 
 
 # def get_object(bucket_name, object_name, region='eu-west-2' ):
