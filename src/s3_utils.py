@@ -1,5 +1,5 @@
 import boto3
-import io 
+import io
 from botocore.exceptions import ClientError
 import logging
 import csv
@@ -9,114 +9,146 @@ logging.basicConfig(level=logging.INFO)
 
 def read_s3(file_path, region="eu-west-2"):
 
-    s3_client = boto3.client("s3", region_name = region)
+    '''
+    This function reads content from an object stored within an S3 object located at the given file. The content returned is a UTF-8 decoded string.sucessfuly
 
-    if not file_path.startswith('s3://'):
-        raise ValueError('The file path must start with \'s3://\'. ')
+    Args:
+        file_path (str) - Takes an S3 file path including a bucket and key.
+
+        region (str) - Specifies the region where the S3 bucket is located. Defaults to eu-west-2.
     
-    paths = file_path[5:].split('/', 1)
+    Returns:
+        The content stored in the S3 as a string.
+    
+    Raises:
+        ValueError:
+            - If the file path is not a valid S3 URI
+            - If the file path does not contain a bucket/key
 
+        ClientError:
+            - If the S3 object can't be accessed
+    
+    Logs:
+        - Logs a success message if the object content is successfully retrieved.
+        - Logs an error message if there is an issue retrieving the S3 object.
+        
+    Examples:
+        >>> file_path = 's3://test-bucket/test-key'
+        >>> read_s3(file_path)
+        'This is the content stored in the S3 object.'
+
+        >>> file_path = 'invalid-path'
+        >>> read_s3(file_path)
+        ValueError: The file path must start with 's3://'.
+    '''
+
+    s3_client = boto3.client("s3", region_name=region)
+
+    # Validate that the file path 
+    if not file_path.startswith("s3://"):
+        raise ValueError("The file path must start with 's3://'. ")
+
+    # Extract the bucket and key from the file path
+    paths = file_path[5:].split("/", 1)
+
+    # Checks that both the bucket and key are present
     if len(paths) != 2:
-        raise ValueError('Path must contain a bucket and an object.')
-    
+        raise ValueError("Path must contain a bucket and an object.")
+
     s3_bucket = paths[0]
     s3_key = paths[1]
 
     try:
+        # Attempt to retrieve the object
         response = s3_client.get_object(Bucket=s3_bucket, Key=s3_key)
+
+        # Read the object content and decode it into a string
         content = response["Body"].read().decode()
-        logging.info(f'Successfully received the content stored in {s3_key} - {content}')
+
+        #Logs a success message on retrieving the content
+        logging.info(
+            f"Successfully received the content stored in {s3_key} - {content}"
+        )
         return content
-    
+
     except ClientError as e:
-        logging.error(f'An error ({e}) has occured whilst trying to access {s3_key}\'s content.')
+        # Log an error message if there's an issue accessing the S3
+        logging.error(
+            f"An error ({e}) has occured whilst trying to access {s3_key}'s content."
+        )
         raise
 
 # print(read_s3('s3://kedz-test-bucket/test-object'))
 
-def write_s3(bucket, key, content, region='eu-west-2'):
 
-    s3_client = boto3.client('s3', region_name=region)
+def write_s3(bucket, key, content, region="eu-west-2"):
+    '''
+    This function uploads content to a specified S3 bucket and key. 
+
+    Args:
+        bucket (str) - The name of the S3 bucket where the content will be stored.
+
+        key (str) - The key in the bucket where the content will be uploaded.
+
+        content (str) - The data to upload to the S3 object.
+
+        region (str) - Specifies the region where the S3 bucket is located. Defaults to eu-west-2.
     
+    Raises:
+        ValueError - If the bucket is empty or inavlid.
+
+        ClientError - If an error occurs whilst trying to upload data to the S3.
+
+    Logs:
+        - A success message if the content is successfully written to the S3 object.
+
+        - An error message if the upload fails.
+
+    '''
+    s3_client = boto3.client("s3", region_name=region)
+
+    # check that the bucket name is provided
     if not bucket:
-        raise ValueError('The specified bucket does not exist')
+        raise ValueError("The specified bucket does not exist")
 
+    if not key:
+        raise ValueError("The specified key does not exist")
     try:
+        # Uploads content to the specified bucket and key
         s3_client.put_object(Bucket=bucket, Key=key, Body=content)
-        logging.info(f'Successfully wrote obfuscated data to {key} in {bucket}')
-    
+        logging.info(f"Successfully wrote obfuscated data to {key} in {bucket}")
+
     except ClientError as e:
-        logging.error(f'Failed to write obfuscated data to S3: {e}')
+        # Log and re-raise error if the operation fails
+        logging.error(f"Failed to write obfuscated data to S3: {e}")
         raise
 
 
 # print(write_s3('s3://kedz-test-bucket/kedz-test-object', 'hi'))
 
 
-'''
-In the first instance, it is only necessary to be able to process CSV data.
 
-The tool will be invoked by sending a JSON string containing:
-•the S3 location of the required CSV file for obfuscation
-
-•the names of the fields that are required to be obfuscated
-
-    {
-"file_to_obfuscate": "s3://my_ingestion_bucket/new_data/file1.csv",
-"pii_fields": ["name", "email_address"]
-}
-'''
-
-
-# def make_bucket(bucket_name, region="eu-west-2"):
-    
-#     s3_client = boto3.client("s3", region_name=region)
+# def create_bucket(bucket, region='eu-west-2'):
+#     s3_client = boto3.client('s3', region_name=region)
 
 #     try:
-#         response = s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint":region})
+#         s3_client.create_bucket(Bucket=bucket, CreateBucketConfiguration={'LocationConstraint': region})
+#         logging.info('Successfully created bucket')
+#         return True
 
-#         print(f'{bucket_name} created successfully.')
-#         return response
+#     except ClientError as e:
+#         logging.error('Failed to upload large bucket')
 
-    
-#     except Exception as e:
-#         print(f'An error has occured while creating the bucket: {e}.')
-#         raise
+# create_bucket('kedz-test-large-bucket')
 
-# make_bucket("final-obfuscation-bucket")
+def write_to_s3(bucket, key, content):
+    s3_client = boto3.client('s3', region_name='eu-west-2')
 
+    try:
+        s3_client.put_object(Bucket=bucket, Key=key, Body= content)
+        logging.info('Successfully put object')
+        return True
+    except ClientError as e:
+        logging.error('Failed to upload large key')
 
-# def put_object(bucket_name, object_name, content, region="eu-west-2"):
-
-#     s3_client = boto3.client("s3", region_name=region)
-
-#     try:
-#         response = s3_client.put_object(Bucket=bucket_name, Key=object_name, Body=content)
-
-#         print(f'{object_name} created successfully.')
-#         return response
-    
-#     except Exception as e:
-#         print(f'An error has occured whilst creating an object: {e}.')
-#         raise
-
-# put_object('final-obfuscation-bucket', 'final-obfuscation-key.csv', 'name,email\njohn Doe,john.doe@example.com\n')
-
-
-# def get_object(bucket_name, object_name, region='eu-west-2' ):
-
-#     s3_client = boto3.client("s3", region_name=region)
-
-#     try:
-#         response = s3_client.get_object(Bucket=bucket_name, Key=object_name)["Body"].read().decode()
-
-#         print(f'Successfully collected {object_name}\'s content.')
-#         print(response)
-#         return response
-        
-#     except Exception as e:
-#         print(f'There has been an error trying to collect the content of {bucket_name}.')
-#         raise
-
-
-# get_object('thisisgoingtobemytestbucket', 'thisismytestprefix/thisismytestobject')
+write_to_s3('kedz-test-large-bucket', 'kedz-test-large-key.csv', ("name,email\njohn Doe,john.doe@example.com\n") * 33333)
