@@ -1,5 +1,4 @@
-from src.s3_utils import read_s3
-from src.s3_utils import write_s3
+from src.s3_read import read_s3
 import pytest
 import boto3
 import moto
