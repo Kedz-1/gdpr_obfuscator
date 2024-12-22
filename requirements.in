@@ -2,4 +2,3 @@ boto3
 pytest
 pytest-cov
 moto
-pandas
