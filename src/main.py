@@ -1,7 +1,12 @@
 from src.obfuscator import obfuscation_tool
-from src.s3_utils import read_s3
-from src.s3_utils import write_s3
+from src.s3_read import read_s3
+from src.s3_write import write_s3
+from datetime import datetime
+import boto3
+from botocore.exceptions import ClientError
+import logging
 
+logging.basicConfig(level=logging.INFO)
 
 def obfuscated_data(input_data, region="eu-west-2"):
 
@@ -41,25 +46,4 @@ def obfuscated_data(input_data, region="eu-west-2"):
     new_key = s3_key.replace(".csv", "-masked.csv")
     write_s3(s3_bucket, new_key, obfuscated_content)
 
-    return obfuscated_content
-
-
-# print(obfuscated_data({
-# "file_to_obfuscate": "s3://masking-test-bucket/masking-test-object",
-# "pii_fields": ["name"]
-# }))
-
-# print(
-#     obfuscated_data(
-#         {
-#             "file_to_obfuscate": "s3://final-obfuscation-bucket/final-obfuscation-key.csv",
-#             "pii_fields": ["name"],
-#         }
-#     )
-# )
-
-
-print(obfuscated_data({
-    "file_to_obfuscate": "s3://kedz-test-large-bucket/kedz-test-large-key.csv",
-    "pii_fields": ["name"]
-}))
+    return obfuscated_content.decode()
