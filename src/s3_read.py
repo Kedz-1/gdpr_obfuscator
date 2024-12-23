@@ -64,7 +64,7 @@ def read_s3(file_path, region="eu-west-2"):
 
         #Logs a success message on retrieving the content
         logging.info(
-            f"Successfully received the content stored in {s3_key} - {content}"
+            f"Successfully received the content stored in {s3_key}."
         )
         return content
 
