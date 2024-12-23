@@ -8,7 +8,7 @@ The GDPR Obfuscator is a Python library module developed to anonymize Personally
 - **AWS S3 Integration**: Reads and writes files directly from and to S3 buckets.
 - **Customizable Fields**: Allows users to define specified PII fields for obfuscation.
 - **Performance Optimized**: Processes CSV files up to 1MB in size within one minute.
-- **Secure**: Uses IAM roles for authentication and avoids embedding credentials.
+- **Secure**: Uses AWS credentials configured via aws configure for authentication and avoids embedding credentials.
 - **Extensible**: Future plans include support for JSON and Parquet file formats.
 
 ## How It Works
