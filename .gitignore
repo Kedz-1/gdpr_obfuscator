@@ -3,3 +3,7 @@ venv/
 **/__pycache__
 .coverage
 .python-version
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
