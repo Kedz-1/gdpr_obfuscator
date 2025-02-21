@@ -6,6 +6,7 @@ import boto3
 from botocore.exceptions import ClientError
 import logging
 import json
+from pii_fields import pii_fields
 
 logging.basicConfig(level=logging.INFO)
 
@@ -24,12 +25,12 @@ def lambda_handler(event, context):
                 'body': 'File already obfuscated'
             }
             
-        pii_fields = ['name', 'email']  
+        #pii_fields = ['name', 'email']  
         file_path = f's3://{bucket}/{key}'
 
         lambda_obfuscated_data = {
             "file_to_obfuscate":file_path,
-            "pii_fields":pii_fields
+            "pii_fields":pii_fields()
             }
         
         result = obfuscated_data(lambda_obfuscated_data)
