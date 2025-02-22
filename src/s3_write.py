@@ -2,6 +2,7 @@ import boto3
 from botocore.exceptions import ClientError
 import logging
 
+logging.basicConfig(level=logging.INFO)
 
 def write_s3(bucket, key, content, region="eu-west-2"):
     '''
@@ -44,3 +45,18 @@ def write_s3(bucket, key, content, region="eu-west-2"):
         # Log and re-raise error if the operation fails
         logging.error(f"Failed to write obfuscated data to S3: {e}")
         raise
+
+
+# def write_to_s3(bucket, key, content, region='eu-west-2'):
+#     s3_client = boto3.client("s3", region_name=region)
+
+#     try:
+
+#         s3_client.put_object(Bucket=bucket, Key=key, Body=content)
+#         logging.info('Successfully added to bucket')
+    
+#     except ClientError as e:
+#         logging.error(f'Failed to upload to bucket: error {e}')
+#         raise
+
+# print(write_to_s3('kedz-tf-test-bucket', 'kedz-tf-test-key-third.csv', "name,email\njohn Doe,john.doe@example.com\n"))
